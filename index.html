@@ -6,10 +6,46 @@
 <!-- Tipografía: Manrope -->
 <title>Magdalena Halberg — Arquitecta</title>
 <meta name="description" content="Magdalena Halberg, arquitecta. Proyectos arquitectónicos, documentación técnica, modelado 3D, visualización arquitectónica y diseño de loteos.">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#14130F">
+<link rel="canonical" href="https://magdalenahalberg.com.ar/">
+<link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Magdalena Halberg — Arquitecta">
+<meta property="og:locale" content="es_AR">
+<meta property="og:url" content="https://magdalenahalberg.com.ar/">
+<meta property="og:title" content="Magdalena Halberg — Arquitecta">
+<meta property="og:description" content="Proyectos arquitectónicos, documentación técnica, modelado 3D, visualización arquitectónica y diseño de loteos.">
+<meta property="og:image" content="https://magdalenahalberg.com.ar/assets/hero-render.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Magdalena Halberg — Arquitecta">
+<meta name="twitter:description" content="Proyectos arquitectónicos, documentación técnica, modelado 3D, visualización arquitectónica y diseño de loteos.">
+<meta name="twitter:image" content="https://magdalenahalberg.com.ar/assets/hero-render.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Magdalena Halberg",
+  "jobTitle": "Arquitecta",
+  "url": "https://magdalenahalberg.com.ar/",
+  "image": "https://magdalenahalberg.com.ar/assets/portrait.jpg",
+  "email": "mailto:halbergmagdalena@gmail.com",
+  "sameAs": [
+    "https://instagram.com/magdalenahalberg.arq"
+  ],
+  "knowsAbout": ["Proyectos arquitectónicos", "Documentación técnica", "Modelado 3D", "Visualización arquitectónica", "Diseño de loteos"]
+}
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+
+<!-- SDK de EmailJS (https://www.emailjs.com/) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -176,8 +212,11 @@
         <label for="f-msg">Mensaje</label>
         <textarea id="f-msg" name="message" rows="3" placeholder="Contame brevemente el proyecto" required></textarea>
       </div>
-      <button class="btn form__send" type="submit">Enviar mensaje <span class="btn__arrow" aria-hidden="true">→</span></button>
-      <p class="form__note" id="form-note" role="status"></p>
+      <div class="flex-container">
+
+        <button class="btn form__send " type="submit">Enviar mensaje <span class="btn__arrow" aria-hidden="true">→</span></button>
+        <p class="form__note " id="form-note" role="status"></p>
+      </div>
     </form>
 
     <div class="direct rise">
@@ -241,14 +280,40 @@
   },{rootMargin:'-45% 0px -50% 0px'});
   secs.forEach(function(sc){ if(sc) spy.observe(sc) });
 
+  // --- EmailJS: completar con los datos de tu cuenta (dashboard.emailjs.com) ---
+  var EMAILJS_PUBLIC_KEY  = 'seTFN3N2EdtXbco91'; // string · "Public Key" en Account > General
+  var EMAILJS_SERVICE_ID  = 'service_fp0r6o8'; // string · id del servicio en Email Services (ej: "service_xxxxxxx")
+  var EMAILJS_TEMPLATE_ID = 'template_4jatrmb'; // string · id de la plantilla en Email Templates (ej: "template_xxxxxxx")
+
+  if(window.emailjs && EMAILJS_PUBLIC_KEY){ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }) }
+
   var f=document.getElementById('contact-form'), note=document.getElementById('form-note');
   f.addEventListener('submit',function(ev){
     ev.preventDefault();
     var n=f.name.value.trim(), m=f.email.value.trim(), t=f.message.value.trim();
     if(!n||!m||!t){ note.textContent='Completá los tres campos para poder enviar el mensaje.'; return }
-    var body='Nombre: '+n+'\nEmail: '+m+'\n\n'+t;
-    window.location.href='mailto:halbergmagdalena@gmail.com?subject='+encodeURIComponent('Consulta desde el sitio — '+n)+'&body='+encodeURIComponent(body);
-    note.textContent='Se abrirá tu cliente de correo con el mensaje listo para enviar.';
+
+    note.textContent='Enviando…';
+
+    // Estos nombres (name, email, message, time) deben coincidir con las
+    // variables {{name}} {{email}} {{message}} {{time}} usadas dentro de tu
+    // plantilla en el dashboard de EmailJS.
+    var templateParams = {
+      name: n,     // string · nombre completo ingresado en el campo "Nombre"
+      email: m,    // string · email ingresado en el campo "Email"
+      message: t,  // string · texto ingresado en el campo "Mensaje"
+      time: new Date().toLocaleString('es-AR') // string · fecha/hora del envío
+    };
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      .then(function(){
+        note.textContent='¡Mensaje enviado! Te voy a responder a la brevedad.';
+        f.reset();
+      })
+      .catch(function(err){
+        note.textContent='Hubo un error al enviar. Probá de nuevo o escribime por mail.';
+        console.error('EmailJS error:', err);
+      });
   });
 })();
 </script>

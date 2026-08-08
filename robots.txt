@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://magdalenahalberg.com.ar/sitemap.xml
