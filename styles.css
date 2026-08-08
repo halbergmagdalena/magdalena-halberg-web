@@ -332,7 +332,8 @@ button,input,textarea{font:inherit;color:inherit}
 .field input::placeholder,.field textarea::placeholder{ color:rgba(20,19,15,.24) }
 .form__send{ cursor:pointer; background:var(--accent); color:#FFF8F4; border:1px solid var(--accent); margin-top:6px }
 .form__send:hover{ background:transparent; color:var(--accent) }
-.form__note{ margin:14px 0 0; font-size:.82rem; color:var(--ink-mute) }
+.flex-container{display:flex; flex-direction: row; gap: 15px}
+.form__note{ font-size:.82rem; color:var(--ink-mute) }
 
 .direct{ grid-column:8 / 13 }
 .direct__list{ border-top:1px solid var(--rule-soft) }
