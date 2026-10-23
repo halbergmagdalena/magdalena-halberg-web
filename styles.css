@@ -543,8 +543,6 @@ html.intro-on .intro{
   background:#14130F; transition:opacity .7s ease;
 }
 .intro.is-leaving{ opacity:0; pointer-events:none }
-/* después del golpe final: la web ya está libre y el video sigue sonando, invisible */
-html.intro-cola .intro{ display:block; position:fixed; inset:0; z-index:-1; opacity:0; pointer-events:none }
 /* el nombre y "Arquitecta" esperan a que termine la intro para hacer su entrada */
 html.intro-on:not(.intro-out) .hero__name span i,
 html.intro-on:not(.intro-out) .hero__role{ animation-play-state:paused }
@@ -561,18 +559,4 @@ html.intro-on:not(.intro-out) .hero__role{ animation-play-state:paused }
 .intro__skip:hover{ background:var(--accent); border-color:var(--accent); color:#FFF8F4 }
 .intro__skip:hover .btn__arrow{ transform:translateX(5px) }
 .intro__skip:focus-visible{ outline:2px solid var(--accent); outline-offset:3px }
-.intro__sound{
-  position:absolute; left:var(--pad); bottom:clamp(20px,5vh,48px);
-  width:40px; height:40px; padding:0; display:grid; place-items:center; cursor:pointer;
-  border-radius:50%; color:var(--bone);
-  background:rgba(20,19,15,.42); border:1px solid rgba(243,240,234,.38);
-  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
-  transition:background .35s ease, border-color .35s ease, color .35s ease;
-}
-.intro__sound[hidden]{ display:none }
-.intro__sound:hover{ background:var(--accent); border-color:var(--accent); color:#FFF8F4 }
-.intro__sound:focus-visible{ outline:2px solid var(--accent); outline-offset:3px }
-.intro__sound .intro__sound-on{ display:none }
-.intro__sound.is-on .intro__sound-on{ display:inline }
-.intro__sound.is-on .intro__sound-off{ display:none }
 @media (prefers-reduced-motion:reduce){ html.intro-on .intro{ transition:none } }
