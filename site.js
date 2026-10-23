@@ -1,10 +1,9 @@
 /* ============================================================
-   Intro en video — solo la primera vez que se entra a la web
+   Intro en video — al entrar a la web desde afuera
    La decisión se toma en el <head> de index.html (clase intro-on).
    ============================================================ */
 (function(){
-  /* cualquier página marca la visita: si se entra por Proyectos y luego se va al inicio, no aparece */
-  try { localStorage.setItem('mh-intro-vista','1'); } catch(e){}
+  try { localStorage.removeItem('mh-intro-vista'); } catch(e){}     /* limpia la marca de la versión anterior */
 
   var root = document.documentElement,
       intro = document.querySelector('[data-intro]');

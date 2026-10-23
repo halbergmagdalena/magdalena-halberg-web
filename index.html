@@ -44,18 +44,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 
-<!-- Intro: se decide antes del primer pintado para que no "parpadee" la página -->
+<!-- Intro: se decide antes del primer pintado para que no "parpadee" la página.
+     Aparece al llegar desde afuera (otro sitio, un link, la dirección escrita o un favorito);
+     no aparece al recargar, al volver atrás ni al navegar entre secciones de la web. -->
 <script>
 (function(){
   var show=false;
   try{
-    var forzar=/[?&]intro(=1)?(&|$)/.test(location.search);           /* ?intro fuerza la intro (para probarla) */
-    var vista=localStorage.getItem('mh-intro-vista');
+    var forzar=/[?&]intro(=1)?(&|$)/.test(location.search);           /* ?intro la fuerza (para probarla) */
+    var nav=performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    var tipo=nav ? nav.type : (performance.navigation && performance.navigation.type===1 ? 'reload' : 'navigate');
+    var interno=false;
+    try{ interno = !!document.referrer && new URL(document.referrer).origin===location.origin; }catch(e){}
     var reducir=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     var ahorro=navigator.connection && navigator.connection.saveData;
-    show = forzar || (!vista && !location.hash && !reducir && !ahorro);
-    localStorage.setItem('mh-intro-vista','1');
-  }catch(e){}                                                           /* sin almacenamiento: no se muestra */
+    show = forzar || (!interno && tipo!=='reload' && tipo!=='back_forward' && !location.hash && !reducir && !ahorro);
+  }catch(e){}
   if(show){
     document.documentElement.classList.add('intro-on');
     /* resguardo: si el script del sitio no cargara, la web nunca queda tapada */
