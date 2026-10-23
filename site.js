@@ -21,10 +21,11 @@
   function cerrar(){
     if(done) return; done = true; clearTimeout(timer);
     intro.classList.add('is-leaving');
+    root.classList.add('intro-out');          /* arranca la entrada del nombre mientras se funde el video */
     setTimeout(function(){
-      root.classList.remove('intro-on');
+      root.classList.remove('intro-on','intro-out');
       try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
-      var brand = document.querySelector('.brand'); if(brand) brand.focus({preventScroll:true});
+      if(document.activeElement === skip) skip.blur();   /* sin recuadro de foco sobrante al cerrar */
     }, 700);
   }
 

@@ -56,7 +56,11 @@
     show = forzar || (!vista && !location.hash && !reducir && !ahorro);
     localStorage.setItem('mh-intro-vista','1');
   }catch(e){}                                                           /* sin almacenamiento: no se muestra */
-  if(show) document.documentElement.classList.add('intro-on');
+  if(show){
+    document.documentElement.classList.add('intro-on');
+    /* resguardo: si el script del sitio no cargara, la web nunca queda tapada */
+    setTimeout(function(){ document.documentElement.classList.remove('intro-on'); }, 40000);
+  }
 })();
 </script>
 
