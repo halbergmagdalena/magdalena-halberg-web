@@ -39,13 +39,12 @@
   /* sonido: se intenta arrancar con audio; si el navegador no lo permite (lo habitual en la
      primera visita), arranca mudo y aparece "Activar sonido". Si tampoco puede reproducir
      mudo (p. ej. ahorro de batería en iPhone), se sigue a la web. */
-  var sound = intro.querySelector('.intro__sound'),
-      soundLabel = sound.querySelector('.intro__sound-label');
+  var sound = intro.querySelector('.intro__sound');
   function pintarSonido(){
-    var on = !v.muted;
+    var on = !v.muted, txt = on ? 'Silenciar' : 'Activar sonido';
     sound.setAttribute('aria-pressed', on ? 'true' : 'false');
+    sound.setAttribute('aria-label', txt); sound.title = txt;
     sound.classList.toggle('is-on', on);
-    soundLabel.textContent = on ? 'Silenciar' : 'Activar sonido';
   }
   sound.addEventListener('click', function(){
     v.muted = !v.muted; v.volume = 1;
