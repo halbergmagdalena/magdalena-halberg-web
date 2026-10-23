@@ -320,7 +320,7 @@ button,input,textarea{font:inherit;color:inherit}
 .field{ position:relative; margin-bottom:clamp(17px,2.3vh,25px) }
 .field label{
   display:block; font:var(--label); letter-spacing:var(--track);
-  text-transform:uppercase; color:var(--ink-mute); margin-bottom:9px;
+  text-transform:uppercase; color:var(--ink-soft); margin-bottom:9px;
 }
 .field input,.field textarea{
   width:100%; background:transparent; border:0; border-bottom:1px solid var(--rule);
