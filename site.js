@@ -20,7 +20,10 @@
   function cerrar(){
     if(done) return; done = true; clearTimeout(timer);
     intro.classList.add('is-leaving');
-    root.classList.add('intro-out');          /* arranca la entrada del nombre mientras se funde el video */
+    root.classList.add('intro-out');
+    /* la música baja junto con el fundido (en iPhone el volumen no es ajustable: corta al cerrar) */
+    var v0 = v.volume, t0 = performance.now();
+    (function bajar(t){ var k = Math.min(1,(t-t0)/600); try { v.volume = v0*(1-k); } catch(e){} if(k<1) requestAnimationFrame(bajar); })(t0);          /* arranca la entrada del nombre mientras se funde el video */
     setTimeout(function(){
       root.classList.remove('intro-on','intro-out');
       try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
@@ -33,8 +36,34 @@
   v.addEventListener('error', cerrar);
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') cerrar(); });
 
-  /* si el navegador bloquea la reproducción automática (p. ej. ahorro de batería en iPhone), no se bloquea la web */
-  var p = v.play(); if(p && p.catch) p.catch(cerrar);
+  /* sonido: se intenta arrancar con audio; si el navegador no lo permite (lo habitual en la
+     primera visita), arranca mudo y aparece "Activar sonido". Si tampoco puede reproducir
+     mudo (p. ej. ahorro de batería en iPhone), se sigue a la web. */
+  var sound = intro.querySelector('.intro__sound'),
+      soundLabel = sound.querySelector('.intro__sound-label');
+  function pintarSonido(){
+    var on = !v.muted;
+    sound.setAttribute('aria-pressed', on ? 'true' : 'false');
+    sound.classList.toggle('is-on', on);
+    soundLabel.textContent = on ? 'Silenciar' : 'Activar sonido';
+  }
+  sound.addEventListener('click', function(){
+    v.muted = !v.muted; v.volume = 1;
+    if(v.paused) v.play();
+    pintarSonido();
+  });
+  function arrancarMudo(){
+    v.muted = true;
+    var q = v.play();
+    if(q && q.then) q.then(function(){ sound.hidden = false; pintarSonido(); }, cerrar);
+    else { sound.hidden = false; pintarSonido(); }
+  }
+  v.muted = false;
+  var p = v.play();
+  if(p && p.then) p.then(function(){ sound.hidden = false; pintarSonido(); }, function(err){
+    if(err && err.name === 'NotAllowedError') arrancarMudo(); else cerrar();
+  });
+  else { sound.hidden = false; pintarSonido(); }
   /* red lenta: si en 6 s no arrancó, se sigue a la web */
   timer = setTimeout(function(){ if(!v.currentTime) cerrar(); }, 6000);
   v.addEventListener('playing', function(){ clearTimeout(timer); }, {once:true});
