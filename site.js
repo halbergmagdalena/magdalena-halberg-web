@@ -1,4 +1,48 @@
 /* ============================================================
+   Intro en video — solo la primera vez que se entra a la web
+   La decisión se toma en el <head> de index.html (clase intro-on).
+   ============================================================ */
+(function(){
+  /* cualquier página marca la visita: si se entra por Proyectos y luego se va al inicio, no aparece */
+  try { localStorage.setItem('mh-intro-vista','1'); } catch(e){}
+
+  var root = document.documentElement,
+      intro = document.querySelector('[data-intro]');
+  if(!intro || !root.classList.contains('intro-on')) return;
+
+  var v = intro.querySelector('video'),
+      skip = intro.querySelector('.intro__skip'),
+      done = false, timer;
+
+  /* video liviano en pantallas chicas; el archivo solo se descarga si la intro se muestra */
+  var chica = window.matchMedia('(max-width: 900px), (max-height: 560px)').matches;
+  v.src = chica ? 'assets/intro-720.mp4' : 'assets/intro-1080.mp4';
+
+  function cerrar(){
+    if(done) return; done = true; clearTimeout(timer);
+    intro.classList.add('is-leaving');
+    setTimeout(function(){
+      root.classList.remove('intro-on');
+      try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
+      var brand = document.querySelector('.brand'); if(brand) brand.focus({preventScroll:true});
+    }, 700);
+  }
+
+  skip.addEventListener('click', cerrar);
+  v.addEventListener('ended', cerrar);
+  v.addEventListener('error', cerrar);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') cerrar(); });
+
+  /* si el navegador bloquea la reproducción automática (p. ej. ahorro de batería en iPhone), no se bloquea la web */
+  var p = v.play(); if(p && p.catch) p.catch(cerrar);
+  /* red lenta: si en 6 s no arrancó, se sigue a la web */
+  timer = setTimeout(function(){ if(!v.currentTime) cerrar(); }, 6000);
+  v.addEventListener('playing', function(){ clearTimeout(timer); }, {once:true});
+
+  skip.focus({preventScroll:true});
+})();
+
+/* ============================================================
    Línea editorial — elemento gráfico permanente
    No es un indicador de carga ni de progreso.
    ============================================================ */

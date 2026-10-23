@@ -44,10 +44,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 
+<!-- Intro: se decide antes del primer pintado para que no "parpadee" la página -->
+<script>
+(function(){
+  var show=false;
+  try{
+    var forzar=/[?&]intro(=1)?(&|$)/.test(location.search);           /* ?intro fuerza la intro (para probarla) */
+    var vista=localStorage.getItem('mh-intro-vista');
+    var reducir=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ahorro=navigator.connection && navigator.connection.saveData;
+    show = forzar || (!vista && !location.hash && !reducir && !ahorro);
+    localStorage.setItem('mh-intro-vista','1');
+  }catch(e){}                                                           /* sin almacenamiento: no se muestra */
+  if(show) document.documentElement.classList.add('intro-on');
+})();
+</script>
+
 <!-- SDK de EmailJS (https://www.emailjs.com/) -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
+
+<!-- ============================ INTRO ============================ -->
+<div class="intro" data-intro role="dialog" aria-modal="true" aria-label="Video introductorio">
+  <video class="intro__video" muted playsinline preload="none" poster="assets/intro-poster.jpg" aria-hidden="true"></video>
+  <button class="intro__skip" type="button">Saltar intro <span class="btn__arrow" aria-hidden="true">→</span></button>
+</div>
 
 <div class="edge" data-edge aria-hidden="true">
   <span class="edge__line"></span>
