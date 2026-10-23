@@ -44,10 +44,43 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 
+<!-- Intro: se decide antes del primer pintado para que no "parpadee" la página.
+     Aparece al llegar desde afuera (otro sitio, un link, la dirección escrita o un favorito);
+     no aparece al recargar, al volver atrás ni al navegar entre secciones de la web. -->
+<script>
+(function(){
+  var show=false;
+  try{
+    var forzar=/[?&]intro(=1)?(&|$)/.test(location.search);           /* ?intro la fuerza (para probarla) */
+    var nav=performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    var tipo=nav ? nav.type : (performance.navigation && performance.navigation.type===1 ? 'reload' : 'navigate');
+    var interno=false;
+    try{ interno = !!document.referrer && new URL(document.referrer).origin===location.origin; }catch(e){}
+    var reducir=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ahorro=navigator.connection && navigator.connection.saveData;
+    show = forzar || (!interno && tipo!=='reload' && tipo!=='back_forward' && !location.hash && !reducir && !ahorro);
+  }catch(e){}
+  if(show){
+    document.documentElement.classList.add('intro-on');
+    /* resguardo: si el script del sitio no cargara, la web nunca queda tapada */
+    setTimeout(function(){ document.documentElement.classList.remove('intro-on'); }, 40000);
+  }
+})();
+</script>
+
 <!-- SDK de EmailJS (https://www.emailjs.com/) -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
+
+<!-- ============================ INTRO ============================ -->
+<div class="intro" data-intro role="dialog" aria-modal="true" aria-label="Video introductorio">
+  <video class="intro__video" muted playsinline preload="none" data-golpe="11.98" poster="assets/intro-poster.jpg" aria-hidden="true"></video>
+  <button class="intro__sound" type="button" aria-pressed="false" aria-label="Activar sonido" title="Activar sonido" hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path class="intro__sound-on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="intro__sound-off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+  </button>
+  <button class="intro__skip" type="button">Saltar intro <span class="btn__arrow" aria-hidden="true">→</span></button>
+</div>
 
 <div class="edge" data-edge aria-hidden="true">
   <span class="edge__line"></span>

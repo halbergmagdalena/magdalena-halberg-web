@@ -1,4 +1,98 @@
 /* ============================================================
+   Intro en video — al entrar a la web desde afuera
+   La decisión se toma en el <head> de index.html (clase intro-on).
+   ============================================================ */
+(function(){
+  try { localStorage.removeItem('mh-intro-vista'); } catch(e){}     /* limpia la marca de la versión anterior */
+
+  var root = document.documentElement,
+      intro = document.querySelector('[data-intro]');
+  if(!intro || !root.classList.contains('intro-on')) return;
+
+  var v = intro.querySelector('video'),
+      skip = intro.querySelector('.intro__skip'),
+      done = false, timer;
+
+  /* versión según la pantalla; el archivo solo se descarga si la intro se muestra:
+     celular o tablet en vertical -> 9:16; pantallas chicas apaisadas -> 720p; resto -> 1080p */
+  var vertical = window.matchMedia('(orientation: portrait) and (max-width: 1024px)').matches,
+      chica = window.matchMedia('(max-width: 900px), (max-height: 560px)').matches;
+  if(vertical){ v.poster = 'assets/intro-poster-vertical.jpg'; v.src = 'assets/intro-vertical.mp4'; }
+  else v.src = chica ? 'assets/intro-720.mp4' : 'assets/intro-1080.mp4';
+
+  function limpiar(){
+    root.classList.remove('intro-cola');
+    try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
+  }
+  function cerrar(natural){
+    if(done) return; done = true; clearTimeout(timer);
+    intro.classList.add('is-leaving');
+    root.classList.add('intro-out');          /* arranca la entrada del nombre mientras se funde el video */
+    var cola = natural === true && !v.muted && !v.ended;
+    if(!cola){
+      /* al saltar, la música baja junto con el fundido (en iPhone el volumen no es ajustable: corta al cerrar) */
+      var v0 = v.volume, t0 = performance.now();
+      (function bajar(t){ var k = Math.min(1,(t-t0)/600); try { v.volume = v0*(1-k); } catch(e){} if(k<1) requestAnimationFrame(bajar); })(t0);
+    }
+    setTimeout(function(){
+      if(cola){
+        /* la web ya se puede usar; la música sigue unos segundos y se apaga sola (viene así en el video) */
+        root.classList.add('intro-cola');
+        setTimeout(limpiar, 6000);             /* resguardo por si el evento de fin no llegara */
+      } else limpiar();
+      root.classList.remove('intro-on','intro-out');
+      if(document.activeElement === skip) skip.blur();   /* sin recuadro de foco sobrante al cerrar */
+    }, 700);
+  }
+
+  skip.addEventListener('click', cerrar);
+  v.addEventListener('ended', function(){ if(done) limpiar(); else cerrar(true); });
+  /* la web aparece en el golpe final (marcado en el video con data-golpe); después sigue la música */
+  var GOLPE = parseFloat(v.getAttribute('data-golpe'));
+  (function vigilar(){
+    if(done) return;
+    var hit = GOLPE || (v.duration ? v.duration - 0.7 : Infinity);
+    if(v.currentTime >= hit) { cerrar(true); return; }
+    requestAnimationFrame(vigilar);
+  })();
+  v.addEventListener('error', cerrar);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') cerrar(); });
+
+  /* sonido: se intenta arrancar con audio; si el navegador no lo permite (lo habitual en la
+     primera visita), arranca mudo y aparece "Activar sonido". Si tampoco puede reproducir
+     mudo (p. ej. ahorro de batería en iPhone), se sigue a la web. */
+  var sound = intro.querySelector('.intro__sound');
+  function pintarSonido(){
+    var on = !v.muted, txt = on ? 'Silenciar' : 'Activar sonido';
+    sound.setAttribute('aria-pressed', on ? 'true' : 'false');
+    sound.setAttribute('aria-label', txt); sound.title = txt;
+    sound.classList.toggle('is-on', on);
+  }
+  sound.addEventListener('click', function(){
+    v.muted = !v.muted; v.volume = 1;
+    if(v.paused) v.play();
+    pintarSonido();
+  });
+  function arrancarMudo(){
+    v.muted = true;
+    var q = v.play();
+    if(q && q.then) q.then(function(){ sound.hidden = false; pintarSonido(); }, cerrar);
+    else { sound.hidden = false; pintarSonido(); }
+  }
+  v.muted = false;
+  var p = v.play();
+  if(p && p.then) p.then(function(){ sound.hidden = false; pintarSonido(); }, function(err){
+    if(err && err.name === 'NotAllowedError') arrancarMudo(); else cerrar();
+  });
+  else { sound.hidden = false; pintarSonido(); }
+  /* red lenta: si en 6 s no arrancó, se sigue a la web */
+  timer = setTimeout(function(){ if(!v.currentTime) cerrar(); }, 6000);
+  v.addEventListener('playing', function(){ clearTimeout(timer); }, {once:true});
+
+  skip.focus({preventScroll:true});
+})();
+
+/* ============================================================
    Línea editorial — elemento gráfico permanente
    No es un indicador de carga ni de progreso.
    ============================================================ */
