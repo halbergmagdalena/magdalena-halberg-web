@@ -17,29 +17,39 @@
   var chica = window.matchMedia('(max-width: 900px), (max-height: 560px)').matches;
   v.src = chica ? 'assets/intro-720.mp4' : 'assets/intro-1080.mp4';
 
+  function limpiar(){
+    root.classList.remove('intro-cola');
+    try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
+  }
   function cerrar(natural){
     if(done) return; done = true; clearTimeout(timer);
     intro.classList.add('is-leaving');
     root.classList.add('intro-out');          /* arranca la entrada del nombre mientras se funde el video */
-    if(natural !== true){
+    var cola = natural === true && !v.muted && !v.ended;
+    if(!cola){
       /* al saltar, la música baja junto con el fundido (en iPhone el volumen no es ajustable: corta al cerrar) */
       var v0 = v.volume, t0 = performance.now();
       (function bajar(t){ var k = Math.min(1,(t-t0)/600); try { v.volume = v0*(1-k); } catch(e){} if(k<1) requestAnimationFrame(bajar); })(t0);
-    }          /* arranca la entrada del nombre mientras se funde el video */
+    }
     setTimeout(function(){
+      if(cola){
+        /* la web ya se puede usar; la música sigue unos segundos y se apaga sola (viene así en el video) */
+        root.classList.add('intro-cola');
+        setTimeout(limpiar, 6000);             /* resguardo por si el evento de fin no llegara */
+      } else limpiar();
       root.classList.remove('intro-on','intro-out');
-      try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
       if(document.activeElement === skip) skip.blur();   /* sin recuadro de foco sobrante al cerrar */
     }, 700);
   }
 
   skip.addEventListener('click', cerrar);
-  v.addEventListener('ended', function(){ cerrar(true); });
-  /* el video trae 0,7 s de remate después del golpe final: la web aparece justo en el golpe */
-  var REMATE = 0.7;
+  v.addEventListener('ended', function(){ if(done) limpiar(); else cerrar(true); });
+  /* la web aparece en el golpe final (marcado en el video con data-golpe); después sigue la música */
+  var GOLPE = parseFloat(v.getAttribute('data-golpe'));
   (function vigilar(){
     if(done) return;
-    if(v.duration && v.currentTime >= v.duration - REMATE) { cerrar(true); return; }
+    var hit = GOLPE || (v.duration ? v.duration - 0.7 : Infinity);
+    if(v.currentTime >= hit) { cerrar(true); return; }
     requestAnimationFrame(vigilar);
   })();
   v.addEventListener('error', cerrar);

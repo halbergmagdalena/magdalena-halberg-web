@@ -543,6 +543,8 @@ html.intro-on .intro{
   background:#14130F; transition:opacity .7s ease;
 }
 .intro.is-leaving{ opacity:0; pointer-events:none }
+/* después del golpe final: la web ya está libre y el video sigue sonando, invisible */
+html.intro-cola .intro{ display:block; position:fixed; inset:0; z-index:-1; opacity:0; pointer-events:none }
 /* el nombre y "Arquitecta" esperan a que termine la intro para hacer su entrada */
 html.intro-on:not(.intro-out) .hero__name span i,
 html.intro-on:not(.intro-out) .hero__role{ animation-play-state:paused }
