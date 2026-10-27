@@ -436,13 +436,6 @@
      devuelve { x, y, face, act?, seat?, pace?, range? } en px relativos al host. */
   function q(sel, ctx){ return (ctx || document).querySelector(sel); }
 
-  /* la primera postura que entra en el espacio libre (px) */
-  function elegir(prefs, libre, u, avoid){
-    var ok = prefs.filter(function(a){ return (ALTO[a] || 100)*u + 6 <= libre; });
-    for(var i = 0; i < ok.length; i++){ if(ok[i] !== avoid) return ok[i]; }
-    return ok[0] || null;
-  }
-
   function spotsHome(narrow){
     /* portada: en la esquina inferior derecha, parado sobre el piso de la imagen, señalando hacia el nombre */
     var hero = { host:'.hero', anchor:'.hero__inner', act: narrow ? 'saludo' : 'senalaNombre', cls:'mu--hero',
@@ -462,110 +455,105 @@
   }
 
   function spotsProyectos(narrow){
-    /* Se alternan cuatro lugares — arriba de la imagen, sentado en una esquina de la
-       imagen, al final de la ficha (lado del texto) y en el piso debajo de la imagen —
-       sin repetir el mismo lugar dos proyectos seguidos. Arriba, abajo y en el texto la
-       postura se elige según el aire disponible (prefs, de la más alta a la más baja),
-       evitando repetir la actividad del proyecto anterior.
-       Es el mismo plan en todos los tamaños; cuando las columnas se apilan (imagen
-       arriba, texto abajo) el aire se mide contra lo que queda en medio. */
-    var plan = [
-      { k:'arriba',  at:.4,  face:-1, prefs:['equilibrio','agacha','abraza','acostado'] },   /* 01 */
-      { k:'texto',   at:.88, act:'sentadoObserva' },                                         /* 02 */
-      { k:'titulo',  at:.66, prefs:['acostado'] },                                           /* 03: acostado sobre "03 / Residencial" */
-      { k:'colgado', prefs:['colgado'] },                                                    /* 04: colgado del borde inferior derecho */
-      { k:'abajo',   at:.5,  face:1,  prefs:['flexiones'] },                                 /* 05 */
-      { k:'linea',   at:.9,  prefs:['mide'] },                                               /* 06: parado sobre la primera línea de la ficha */
-      { k:'arriba',  at:.6,  face:1,  prefs:['estira','lee','gatea','acostado'] },           /* 07 */
-      { k:'titulo',  at:.7,  prefs:['flexiones'] },                                          /* 08: flexiones sobre "08 / Gastronómico" */
-      { k:'abajo',   at:.45, face:1,  prefs:['paseo','agacha','flexiones','siesta'] },       /* 09 */
-      { k:'esquina', lado:0, act:'sentadoSaluda' }                                           /* 10 */
+    /* Un tipito fijo por proyecto (sin elección automática), uno para computadora y
+       otro para celular. Lugares:
+         arriba  : parado sobre el borde superior de la imagen
+         esquina : sentado en una esquina superior de la imagen (lado 1 = la que da al texto)
+         texto   : sentado o parado sobre la última línea de la ficha
+         linea   : parado sobre la primera línea de la ficha
+         titulo  : sobre el número naranja ("03 / Residencial")
+         colgado : colgado del borde inferior derecho de la imagen
+         abajo   : debajo de la imagen — en computadora sobre la línea de abajo del
+                   proyecto; en celular justo debajo de la imagen, antes del texto      */
+    var PC = [
+      { k:'arriba',  at:.4,  face:-1, act:'equilibrio' },       /* 01 */
+      { k:'texto',   at:.88, act:'sentadoObserva' },            /* 02 */
+      { k:'titulo',  at:.66, act:'acostado' },                  /* 03 */
+      { k:'colgado', act:'colgado' },                           /* 04 */
+      { k:'abajo',   at:.5,  face:1,  act:'flexiones' },        /* 05 */
+      { k:'linea',   at:.9,  act:'mide' },                      /* 06 */
+      { k:'arriba',  at:.6,  face:1,  act:'estira' },           /* 07 */
+      { k:'titulo',  at:.7,  act:'flexiones' },                 /* 08 */
+      { k:'abajo',   at:.45, face:1,  act:'siesta' },           /* 09 */
+      { k:'esquina', lado:0, act:'sentadoSaluda' }              /* 10 */
     ];
-    var out = [];
+    var CEL = [
+      { k:'esquina', lado:1, act:'sentadoDibuja' },             /* 01 */
+      { k:'texto',   at:.86, act:'sentadoObserva' },            /* 02 */
+      { k:'titulo',  at:.66, act:'acostado' },                  /* 03 */
+      { k:'colgado', act:'colgado' },                           /* 04 */
+      { k:'abajo',   at:.72, face:1,  act:'flexiones' },        /* 05 */
+      { k:'linea',   at:.94, act:'mide' },                      /* 06 */
+      { k:'texto',   at:.86, act:'sentadoSaluda' },             /* 07 */
+      { k:'titulo',  at:.7,  act:'flexiones' },                 /* 08 */
+      { k:'esquina', lado:1, act:'sentadoSenala' },             /* 09 */
+      { k:'texto',   at:.88, act:'saludo' }                     /* 10 */
+    ];
+    var plan = narrow ? CEL : PC, out = [];
     [].forEach.call(document.querySelectorAll('.proj'), function(sec, i){
-      var p = plan[i % plan.length], flip = sec.classList.contains('proj--flip'), n0 = out.length;
+      var p = plan[i % plan.length], flip = sec.classList.contains('proj--flip');
       var media = q('.proj__media', sec), win = q('.car__win', sec) || media, body = q('.proj__body', sec);
       var rows = body.querySelectorAll('.meta__row'), linea = rows.length ? rows[rows.length-1] : body;
-      function apilado(){ return body.offsetTop >= media.offsetTop + media.offsetHeight - 1; }
-      /* mira hacia la imagen cuando está del lado del texto */
-      var haciaImagen = narrow ? -1 : (flip ? 1 : -1);
+      var meta = q('.meta', body) || body, num = q('.proj__num', body) || body;
+      /* del lado del texto mira hacia la imagen; en celular, hacia el margen libre */
+      var haciaImagen = narrow ? 1 : (flip ? 1 : -1);
+      function arribaEn(el, ancestro){                         /* distancia vertical hasta el ancestro, sin transformaciones */
+        var y = 0; while(el && el !== ancestro){ y += el.offsetTop; el = el.offsetParent; } return y;
+      }
+      function textoDe(el, host){                              /* la caja del texto (no del bloque) */
+        var rg = document.createRange(); rg.selectNodeContents(el);
+        var tb = rg.getBoundingClientRect(), hb = host.getBoundingClientRect();
+        return { x: tb.left - hb.left, y: tb.top - hb.top, w: tb.width, h: tb.height };
+      }
+      var spot;
       if(p.k === 'esquina'){
         var interior = p.lado === 1, derecha = narrow ? interior : (flip ? !interior : interior);
-        out.push({ hostEl:media, anchorEl:win, mode:'sit', act:p.act,
-          at: narrow ? (derecha ? .84 : .16) : (derecha ? 1 : 0), off: narrow ? 0 : (derecha ? -4 : 4), face: derecha ? 1 : -1 });
-      } else if(p.k === 'texto' && p.act){
-        /* sentado sobre la última línea de la ficha, con las piernas colgando hacia el espacio libre */
-        out.push({ hostEl:body, anchorEl:linea, act:p.act,
-          pos:function(rel){ var l = rel(linea); return { x: l.x + l.w*p.at, y: l.y + l.h, face:haciaImagen, act:p.act }; } });
+        spot = { hostEl:media, anchorEl:win, mode:'sit', act:p.act,
+          at: narrow ? (derecha ? .84 : .16) : (derecha ? 1 : 0), off: narrow ? 0 : (derecha ? -4 : 4), face: derecha ? 1 : -1 };
       } else if(p.k === 'texto'){
-        /* parado sobre la última línea de la ficha, en el extremo libre */
-        out.push({ hostEl:body, anchorEl:linea, act:p.prefs[0],
-          pos:function(rel, u, host, avoid){
-            var l = rel(linea), act = elegir(p.prefs, 999, u, avoid) || p.prefs[0];
-            return encuadre({ x: l.x + l.w*p.at, y: l.y + l.h, face:haciaImagen, act:act }, l, u);
-          } });
-      } else if(p.k === 'titulo'){
-        /* sobre la línea naranja del número (p. ej. "03 / Residencial") */
-        var num = q('.proj__num', body) || body;
-        out.push({ hostEl:body, anchorEl:num, act:p.prefs[0],
-          pos:function(rel, u, host, avoid){
-            var n = rel(num), rg = document.createRange(); rg.selectNodeContents(num);
-            var tb = rg.getBoundingClientRect(), hb = host.getBoundingClientRect();
-            var span = { x: tb.left - hb.left, y: tb.top - hb.top, w: tb.width, h: tb.height };   /* el texto, no la caja */
-            var libre = body.offsetTop + span.y;                     /* aire hasta la línea de arriba, sin la animación de entrada */
-            if(apilado()) libre -= media.offsetTop + media.offsetHeight;   /* celular: hasta el borde de la imagen */
-            var act = elegir(p.prefs, libre, u, avoid) || p.prefs[0];
-            return encuadre({ x: span.x + span.w*p.at, y: span.y, face:haciaImagen, act:act, libre:libre }, span, u);
-          } });
+        spot = { hostEl:body, anchorEl:linea, act:p.act,
+          pos:function(rel, u){ var l = rel(linea); return encuadre({ x: l.x + l.w*p.at, y: l.y + l.h, face:haciaImagen, act:p.act }, l, u); } };
       } else if(p.k === 'linea'){
-        /* parado sobre la primera línea de la ficha, en el extremo libre */
-        var meta = q('.meta', body) || body;
-        out.push({ hostEl:body, anchorEl:meta, act:p.prefs[0],
-          pos:function(rel, u, host, avoid){
-            var m = rel(meta), act = elegir(p.prefs, 999, u, avoid) || p.prefs[0];
-            return encuadre({ x: m.x + m.w*p.at, y: m.y, face:haciaImagen, act:act }, m, u);
-          } });
+        spot = { hostEl:body, anchorEl:meta, act:p.act,
+          pos:function(rel, u){ var m = rel(meta); return encuadre({ x: m.x + m.w*p.at, y: m.y, face:haciaImagen, act:p.act }, m, u); } };
+      } else if(p.k === 'titulo'){
+        spot = { hostEl:body, anchorEl:num, act:p.act,
+          pos:function(rel, u, host){ var t = textoDe(num, host); return encuadre({ x: t.x + t.w*p.at, y: t.y, face:haciaImagen, act:p.act }, t, u); } };
       } else if(p.k === 'colgado'){
-        /* colgado del borde inferior de la imagen, cerca de la esquina derecha */
-        out.push({ hostEl:media, anchorEl:win, act:'colgado',
-          pos:function(rel, u){
-            var w = rel(win), libre = (apilado() ? body.offsetTop : sec.clientHeight) - media.offsetTop - (w.y + w.h);
-            return encuadre({ x: w.x + w.w - 18*u, y: w.y + w.h, face:-1, act:'colgado', libre:libre }, w, u);
-          } });
+        spot = { hostEl:media, anchorEl:win, act:p.act,
+          pos:function(rel, u){ var w = rel(win); return encuadre({ x: w.x + w.w - 18*u, y: w.y + w.h, face:-1, act:p.act }, w, u); } };
       } else if(p.k === 'arriba'){
-        out.push({ hostEl:media, anchorEl:win, act:p.prefs[p.prefs.length-1],
-          pos:function(rel, u, host, avoid){
-            var w = rel(win), libre = media.offsetTop + w.y;                       /* aire entre la línea de arriba y la imagen */
-            var act = elegir(p.prefs, libre, u, avoid) || p.prefs[p.prefs.length-1];
-            return encuadre({ x: w.x + w.w*p.at, y: w.y, face:p.face, act:act, libre:libre }, w, u);
-          } });
+        spot = { hostEl:media, anchorEl:win, act:p.act,
+          pos:function(rel, u){ var w = rel(win); return encuadre({ x: w.x + w.w*p.at, y: w.y, face:p.face, act:p.act }, w, u); } };
+      } else if(narrow){
+        /* abajo, en celular: justo debajo de la imagen, apoyado en la altura del número naranja */
+        spot = { hostEl:media, anchorEl:win, act:p.act,
+          pos:function(rel, u){
+            var w = rel(win), piso = arribaEn(num, sec) - arribaEn(media, sec);          /* sin la animación de entrada */
+            return encuadre({ x: w.x + w.w*p.at, y: piso, face:p.face, act:p.act }, w, u);
+          } };
       } else {
-        out.push({ hostEl:media, anchorEl:win, act:p.prefs[p.prefs.length-1],
-          pos:function(rel, u, host, avoid){
-            var w = rel(win), piso = sec.clientHeight - media.offsetTop;         /* el piso es la línea de abajo */
-            var libre = piso - (w.y + w.h);
-            if(apilado()) libre = sec.clientHeight - (body.offsetTop + body.offsetHeight);   /* celular: el aire bajo la ficha */
-            var act = elegir(p.prefs, libre, u, avoid) || p.prefs[p.prefs.length-1];
-            return encuadre({ x: w.x + w.w*p.at, y: piso, face:p.face, act:act, libre:libre }, w, u);
-          } });
+        /* abajo, en computadora: sobre la línea de abajo del proyecto, debajo de la imagen */
+        spot = { hostEl:media, anchorEl:win, act:p.act,
+          pos:function(rel, u){
+            var w = rel(win), piso = sec.clientHeight - media.offsetTop;
+            return encuadre({ x: w.x + w.w*p.at, y: piso, face:p.face, act:p.act }, w, u);
+          } };
       }
-      if(out[n0]) out[n0].k = p.k;                         /* el tipo de lugar, para no repetir */
+      spot.k = p.k; out.push(spot);
     });
     /* el botón del portfolio: tira de él */
     if(q('.pdf__side .btn')) out.push({ host:'.pdf__side', anchor:'.pdf__side .btn', mode:'right', gap:26, act:'tira', hover:'festeja' });
     return out;
   }
 
-  /* mantiene el cuerpo entero dentro del tramo de apoyo (no queda colgando del borde);
-     si la postura se desplaza, calcula hasta dónde puede ir */
+  /* mantiene el cuerpo entero dentro del tramo de apoyo (no queda colgando del borde).
+     Todos los tipitos tienen la misma escala. */
   function encuadre(o, span, u){
-    /* si ni la postura más baja entra en el aire disponible, el tipito se achica (hasta 72 %) */
-    if(o.libre != null && ALTO[o.act]){ var nec = ALTO[o.act]*u + 4; if(nec > o.libre) o.sc = Math.max(.72, (o.libre - 4)/(ALTO[o.act]*u)); }
-    var sc = o.sc || 1; u = u*sc;
     var ex = EXT[o.act] || [-14, 14], m = 3*u;
     var izq = (o.face === 1 ? -ex[0] : ex[1])*u, der = (o.face === 1 ? ex[1] : -ex[0])*u;    /* lo que ocupa a cada lado */
     var lo = span.x + izq + m, hi = span.x + span.w - der - m;
-    if(PASO[o.act]){                                       /* se desplaza: también hacia atrás */
+    if(PASO[o.act]){
       var r = Math.max(ex[1], -ex[0])*u;
       lo = span.x + r + m; hi = span.x + span.w - r - m;
       o.range = Math.max(0, Math.min(o.x - lo, hi - o.x, (hi - lo)/2));
