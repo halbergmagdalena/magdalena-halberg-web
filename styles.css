@@ -562,25 +562,22 @@ html.intro-on:not(.intro-out) .hero__role{ animation-play-state:paused }
 @media (prefers-reduced-motion:reduce){ html.intro-on .intro{ transition:none } }
 
 /* ============================================================
-   Muñeco articulado (munieco.js) — dibujante de croquis
+   Tipitos (munieco.js) — escala humana en trazo de croquis
    ============================================================ */
-.munieco{
-  --mu-h:clamp(128px,17vh,176px);
-  position:fixed; left:0; bottom:0; z-index:46;
+.mu{
+  --mu-h:clamp(84px,7.4vw,108px);
+  position:absolute; z-index:3; pointer-events:none;
   height:var(--mu-h); width:calc(var(--mu-h)*.875);
-  color:var(--ink); opacity:0; pointer-events:none;
-  transition:color .5s ease, opacity .6s ease; will-change:transform;
+  color:inherit; opacity:.94; transition:opacity .5s ease;
 }
-.munieco.is-on{ opacity:.92 }
-.munieco.is-light{ color:var(--bone) }
-.munieco svg{ display:block; width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round }
-.munieco .mu-l1{ stroke-width:1.35 }
-.munieco .mu-l2{ stroke-width:.55 }
-.munieco .mu-hair{ stroke-width:1.5 }
-.munieco .mu-eye{ fill:currentColor; stroke:none }
-.munieco .mu-joint{ stroke-width:.5; stroke-opacity:.55 }
-.munieco .mu-ground{ stroke-width:.6; stroke-opacity:.5 }
-.munieco .mu-dim{ stroke-width:.7; stroke-opacity:.8 }
-.munieco .mu-trail{ stroke:var(--accent); stroke-width:1; stroke-opacity:.85 }
-@media (max-width:899px){ .munieco{ display:none } }
-@media (prefers-reduced-motion:reduce){ .munieco{ display:none } }
+.mu.is-quiet{ opacity:0 }
+.mu svg{ display:block; width:100%; height:100%; overflow:visible; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round }
+.mu .mu-l1{ stroke-width:1.45 }
+.mu .mu-l2{ stroke-width:.6 }
+.mu .mu-hair{ stroke-width:1.6 }
+.mu .mu-eye{ fill:currentColor; stroke:none }
+.mu .mu-joint{ stroke-width:.55; stroke-opacity:.55 }
+.mu .mu-ground{ stroke-width:.7; stroke-opacity:.5 }
+.mu .mu-dim{ stroke-width:.75; stroke-opacity:.8 }
+.mu .mu-trail{ stroke:var(--accent); stroke-width:1.05; stroke-opacity:.85 }
+@media (max-width:899px){ .mu{ --mu-h:80px } }
