@@ -581,3 +581,7 @@ html.intro-on:not(.intro-out) .hero__role{ animation-play-state:paused }
 .mu .mu-dim{ stroke-width:.75; stroke-opacity:.8 }
 .mu .mu-trail{ stroke:var(--accent); stroke-width:1.05; stroke-opacity:.85 }
 @media (max-width:899px){ .mu{ --mu-h:80px } }
+/* el de la portada aparece cuando el nombre ya entró */
+.mu--hero{ animation:mu-in .6s ease 1.15s both }
+html.intro-on:not(.intro-out) .mu--hero{ animation-play-state:paused }
+@keyframes mu-in{ from{ opacity:0 } to{ opacity:.94 } }
