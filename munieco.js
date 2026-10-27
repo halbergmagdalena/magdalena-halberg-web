@@ -52,8 +52,11 @@
       low = -99;
       [['hpF',5.4],['hpB',5.4],['knF',3.7],['knB',3.7],['anF',2.4],['anB',2.4],['heF',2.1],['heB',2.1],['toF',1.6],['toB',1.6],
        ['elF',2.6],['elB',2.6],['haF',3.2],['haB',3.2],['sh',7],['hip',6],['head',7.4]].forEach(function(r){ low = Math.max(low, J[r[0]][1] + r[1]); });
+    } else if(seat === 'hang'){                            /* colgado: las manos toman el borde (y = 0) */
+      var hF = add(J.haF, dn(P.uaF + P.eaF), 1.6), hB = add(J.haB, dn(P.uaB + P.eaB), 1.6);
+      low = Math.min(hF[1], hB[1]) - 1.2;
     } else low = Math.max(J.heF[1], J.toF[1], J.heB[1], J.toB[1]) + 1.5;
-    var dy = -low - P.lift;
+    var dy = seat === 'hang' ? -low : -low - P.lift;
     for(var k in J){ if(J.hasOwnProperty(k)) J[k] = [J[k][0], J[k][1] + dy]; }
     return J;
   }
@@ -252,6 +255,14 @@
       P.hB = function(J){ return [J.sh[0] + 8.5, J.sh[1] + 13]; };
       P.flag = 'book';
     },
+    colgado: function(P,t){                             /* colgado del borde, se balancea y patalea */
+      var sw = 5*Math.sin(t*1.5);
+      P.lean = sw; P.head = 6 - sw + 4*Math.sin(t*.8);
+      P.uaF = 178 + sw; P.eaF = 0; P.uaB = 172 + sw; P.eaB = 4;
+      P.tF = 80 + 10*Math.sin(t*2.6) + sw; P.kF = 132 + 8*Math.sin(t*2.6);     /* rodillas recogidas */
+      P.tB = 74 - 10*Math.sin(t*2.6) + sw; P.kB = 128 - 8*Math.sin(t*2.6);
+      P.fF = 60; P.fB = 60;
+    },
     bocaAbajo: function(P,t){                           /* boca abajo, el mentón en las manos, pateando */
       P.lean = 78 + 2*Math.sin(t*.8); P.head = -66 + 4*Math.sin(t*.9);
       P.tF = -84; P.kF = 80 + 22*Math.sin(t*2.4); P.fF = -150;
@@ -278,11 +289,11 @@
   /* alto aproximado de cada postura sobre su apoyo, en unidades (para ver si entra) */
   /* medidos sobre el dibujo (unidades): alto sobre el apoyo y ancho [atrás, adelante] */
   var ALTO = { paseo:95, saludo:106, telefono:94, equilibrio:93, estira:114, observa:94, mide:104,
-               agacha:67, lee:57, abraza:54, gatea:50, flexiones:45, acostado:37, bocaAbajo:35, siesta:29 };
+               agacha:67, lee:57, abraza:54, gatea:50, flexiones:45, acostado:37, bocaAbajo:35, siesta:29, colgado:90 };   /* colgado: largo debajo del borde */
   var EXT  = { paseo:[-26,24], saludo:[-11,23], telefono:[-14,21], equilibrio:[-46,49], estira:[-15,18],
                observa:[-15,22], agacha:[-7,28], lee:[-8,47], abraza:[-7,42], gatea:[-35,44],
-               flexiones:[-46,48], acostado:[-41,47], bocaAbajo:[-42,43], siesta:[-43,47] };
-  var MODO = { lee:'floor', acostado:'floor', abraza:'floor', gatea:'floor', flexiones:'floor', bocaAbajo:'floor', siesta:'floor' };
+               flexiones:[-46,48], acostado:[-41,47], bocaAbajo:[-42,43], siesta:[-43,47], colgado:[-11,27], mide:[-14,37] };
+  var MODO = { lee:'floor', acostado:'floor', abraza:'floor', gatea:'floor', flexiones:'floor', bocaAbajo:'floor', siesta:'floor', colgado:'hang' };
   function modo(act){ return MODO[act] || (/^sentado/.test(act) ? 'sit' : 'stand'); }
   var PASO = { paseo:92, gatea:34 };                  /* los que se desplazan, en unidades por segundo */
 
@@ -469,16 +480,16 @@
       { k:'esquina', lado:1, act:'sentadoSenala' },
       { k:'texto',   at:.88, prefs:['saludo'] }
     ] : [
-      { k:'arriba',  at:.4,  face:-1, prefs:['equilibrio','agacha','abraza','acostado'] },
-      { k:'texto',   at:.88, act:'sentadoObserva' },
-      { k:'abajo',   at:.5,  face:1,  prefs:['paseo','gatea','lee','acostado'] },
-      { k:'esquina', lado:1, act:'sentadoDibuja' },
-      { k:'texto',   at:.9,  prefs:['telefono'] },
-      { k:'abajo',   at:.6,  face:-1, prefs:['saludo','flexiones','abraza','bocaAbajo'] },
-      { k:'arriba',  at:.6,  face:1,  prefs:['estira','lee','gatea','acostado'] },
-      { k:'texto',   at:.88, act:'sentadoPatea' },
-      { k:'abajo',   at:.45, face:1,  prefs:['paseo','agacha','flexiones','siesta'] },
-      { k:'esquina', lado:0, act:'sentadoSaluda' }
+      { k:'arriba',  at:.4,  face:-1, prefs:['equilibrio','agacha','abraza','acostado'] },   /* 01 */
+      { k:'texto',   at:.88, act:'sentadoObserva' },                                         /* 02 */
+      { k:'titulo',  at:.66, prefs:['acostado'] },                                           /* 03: acostado sobre "03 / Residencial" */
+      { k:'colgado', prefs:['colgado'] },                                                    /* 04: colgado del borde inferior derecho */
+      { k:'abajo',   at:.5,  face:1,  prefs:['flexiones'] },                                 /* 05 */
+      { k:'linea',   at:.9,  prefs:['mide'] },                                               /* 06: parado sobre la primera línea de la ficha */
+      { k:'arriba',  at:.6,  face:1,  prefs:['estira','lee','gatea','acostado'] },           /* 07 */
+      { k:'titulo',  at:.7,  prefs:['flexiones'] },                                          /* 08: flexiones sobre "08 / Gastronómico" */
+      { k:'abajo',   at:.45, face:1,  prefs:['paseo','agacha','flexiones','siesta'] },       /* 09 */
+      { k:'esquina', lado:0, act:'sentadoSaluda' }                                           /* 10 */
     ];
     var out = [];
     [].forEach.call(document.querySelectorAll('.proj'), function(sec, i){
@@ -502,16 +513,44 @@
             var l = rel(linea), act = elegir(p.prefs, 999, u, avoid) || p.prefs[0];
             return encuadre({ x: l.x + l.w*p.at, y: l.y + l.h, face:haciaImagen, act:act }, l, u);
           } });
-      } else if(p.k === 'arriba'){
-        out.push({ hostEl:sec, anchorEl:win, act:p.prefs[p.prefs.length-1],
+      } else if(p.k === 'titulo'){
+        /* sobre la línea naranja del número (p. ej. "03 / Residencial") */
+        var num = q('.proj__num', body) || body;
+        out.push({ hostEl:body, anchorEl:num, act:p.prefs[0],
           pos:function(rel, u, host, avoid){
-            var w = rel(win), act = elegir(p.prefs, w.y, u, avoid) || p.prefs[p.prefs.length-1];   /* aire entre la línea de arriba y la imagen */
-            return encuadre({ x: w.x + w.w*p.at, y: w.y, face:p.face, act:act, libre:w.y }, w, u);
+            var n = rel(num), rg = document.createRange(); rg.selectNodeContents(num);
+            var tb = rg.getBoundingClientRect(), hb = host.getBoundingClientRect();
+            var span = { x: tb.left - hb.left, y: tb.top - hb.top, w: tb.width, h: tb.height };   /* el texto, no la caja */
+            var libre = body.offsetTop + span.y;                     /* aire hasta la línea de arriba, sin la animación de entrada */
+            var act = elegir(p.prefs, libre, u, avoid) || p.prefs[0];
+            return encuadre({ x: span.x + span.w*p.at, y: span.y, face:haciaImagen, act:act, libre:libre }, span, u);
+          } });
+      } else if(p.k === 'linea'){
+        /* parado sobre la primera línea de la ficha, en el extremo libre */
+        var meta = q('.meta', body) || body;
+        out.push({ hostEl:body, anchorEl:meta, act:p.prefs[0],
+          pos:function(rel, u, host, avoid){
+            var m = rel(meta), act = elegir(p.prefs, 999, u, avoid) || p.prefs[0];
+            return encuadre({ x: m.x + m.w*p.at, y: m.y, face:haciaImagen, act:act }, m, u);
+          } });
+      } else if(p.k === 'colgado'){
+        /* colgado del borde inferior de la imagen, cerca de la esquina derecha */
+        out.push({ hostEl:media, anchorEl:win, act:'colgado',
+          pos:function(rel, u){
+            var w = rel(win), libre = sec.clientHeight - media.offsetTop - (w.y + w.h);
+            return encuadre({ x: w.x + w.w - 18*u, y: w.y + w.h, face:-1, act:'colgado', libre:libre }, w, u);
+          } });
+      } else if(p.k === 'arriba'){
+        out.push({ hostEl:media, anchorEl:win, act:p.prefs[p.prefs.length-1],
+          pos:function(rel, u, host, avoid){
+            var w = rel(win), libre = media.offsetTop + w.y;                       /* aire entre la línea de arriba y la imagen */
+            var act = elegir(p.prefs, libre, u, avoid) || p.prefs[p.prefs.length-1];
+            return encuadre({ x: w.x + w.w*p.at, y: w.y, face:p.face, act:act, libre:libre }, w, u);
           } });
       } else {
-        out.push({ hostEl:sec, anchorEl:win, act:p.prefs[p.prefs.length-1],
+        out.push({ hostEl:media, anchorEl:win, act:p.prefs[p.prefs.length-1],
           pos:function(rel, u, host, avoid){
-            var w = rel(win), piso = host.clientHeight;                          /* el piso es la línea de abajo */
+            var w = rel(win), piso = sec.clientHeight - media.offsetTop;         /* el piso es la línea de abajo */
             var libre = piso - (w.y + w.h), act = elegir(p.prefs, libre, u, avoid) || p.prefs[p.prefs.length-1];
             return encuadre({ x: w.x + w.w*p.at, y: piso, face:p.face, act:act, libre:libre }, w, u);
           } });
@@ -679,6 +718,7 @@
     window.addEventListener('load', layout);
     window.addEventListener('resize', layout, { passive:true });
     document.addEventListener('animationend', layout);     /* el nombre y el rol entran animados */
+    document.addEventListener('transitionend', function(ev){ if(ev.target.classList && ev.target.classList.contains('rise') && ev.propertyName === 'transform') layout(); });
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
     if(MQ_N.addEventListener) MQ_N.addEventListener('change', remount); else if(MQ_N.addListener) MQ_N.addListener(remount);
     if(!REDUCE) requestAnimationFrame(frame);
