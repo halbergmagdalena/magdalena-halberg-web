@@ -467,19 +467,9 @@
        sin repetir el mismo lugar dos proyectos seguidos. Arriba, abajo y en el texto la
        postura se elige según el aire disponible (prefs, de la más alta a la más baja),
        evitando repetir la actividad del proyecto anterior.
-       En celular debajo de la imagen está el texto, así que no hay "abajo". */
-    var plan = narrow ? [
-      { k:'esquina', lado:1, act:'sentadoDibuja' },
-      { k:'texto',   at:.86, act:'sentadoObserva' },
-      { k:'arriba',  at:.32, face:1,  prefs:['abraza','gatea','acostado'] },
-      { k:'texto',   at:.88, prefs:['telefono'] },
-      { k:'esquina', lado:0, act:'sentadoPatea' },
-      { k:'arriba',  at:.42, face:-1, prefs:['lee','flexiones','bocaAbajo'] },
-      { k:'texto',   at:.86, act:'sentadoSaluda' },
-      { k:'arriba',  at:.5,  face:1,  prefs:['gatea','abraza','siesta'] },
-      { k:'esquina', lado:1, act:'sentadoSenala' },
-      { k:'texto',   at:.88, prefs:['saludo'] }
-    ] : [
+       Es el mismo plan en todos los tamaños; cuando las columnas se apilan (imagen
+       arriba, texto abajo) el aire se mide contra lo que queda en medio. */
+    var plan = [
       { k:'arriba',  at:.4,  face:-1, prefs:['equilibrio','agacha','abraza','acostado'] },   /* 01 */
       { k:'texto',   at:.88, act:'sentadoObserva' },                                         /* 02 */
       { k:'titulo',  at:.66, prefs:['acostado'] },                                           /* 03: acostado sobre "03 / Residencial" */
@@ -496,6 +486,7 @@
       var p = plan[i % plan.length], flip = sec.classList.contains('proj--flip'), n0 = out.length;
       var media = q('.proj__media', sec), win = q('.car__win', sec) || media, body = q('.proj__body', sec);
       var rows = body.querySelectorAll('.meta__row'), linea = rows.length ? rows[rows.length-1] : body;
+      function apilado(){ return body.offsetTop >= media.offsetTop + media.offsetHeight - 1; }
       /* mira hacia la imagen cuando está del lado del texto */
       var haciaImagen = narrow ? -1 : (flip ? 1 : -1);
       if(p.k === 'esquina'){
@@ -522,6 +513,7 @@
             var tb = rg.getBoundingClientRect(), hb = host.getBoundingClientRect();
             var span = { x: tb.left - hb.left, y: tb.top - hb.top, w: tb.width, h: tb.height };   /* el texto, no la caja */
             var libre = body.offsetTop + span.y;                     /* aire hasta la línea de arriba, sin la animación de entrada */
+            if(apilado()) libre -= media.offsetTop + media.offsetHeight;   /* celular: hasta el borde de la imagen */
             var act = elegir(p.prefs, libre, u, avoid) || p.prefs[0];
             return encuadre({ x: span.x + span.w*p.at, y: span.y, face:haciaImagen, act:act, libre:libre }, span, u);
           } });
@@ -537,7 +529,7 @@
         /* colgado del borde inferior de la imagen, cerca de la esquina derecha */
         out.push({ hostEl:media, anchorEl:win, act:'colgado',
           pos:function(rel, u){
-            var w = rel(win), libre = sec.clientHeight - media.offsetTop - (w.y + w.h);
+            var w = rel(win), libre = (apilado() ? body.offsetTop : sec.clientHeight) - media.offsetTop - (w.y + w.h);
             return encuadre({ x: w.x + w.w - 18*u, y: w.y + w.h, face:-1, act:'colgado', libre:libre }, w, u);
           } });
       } else if(p.k === 'arriba'){
@@ -551,7 +543,9 @@
         out.push({ hostEl:media, anchorEl:win, act:p.prefs[p.prefs.length-1],
           pos:function(rel, u, host, avoid){
             var w = rel(win), piso = sec.clientHeight - media.offsetTop;         /* el piso es la línea de abajo */
-            var libre = piso - (w.y + w.h), act = elegir(p.prefs, libre, u, avoid) || p.prefs[p.prefs.length-1];
+            var libre = piso - (w.y + w.h);
+            if(apilado()) libre = sec.clientHeight - (body.offsetTop + body.offsetHeight);   /* celular: el aire bajo la ficha */
+            var act = elegir(p.prefs, libre, u, avoid) || p.prefs[p.prefs.length-1];
             return encuadre({ x: w.x + w.w*p.at, y: piso, face:p.face, act:act, libre:libre }, w, u);
           } });
       }
