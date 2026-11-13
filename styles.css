@@ -558,6 +558,7 @@ main:focus { outline: none }
 .nav .btn-nav.is-active { box-shadow: inset 0 -3px var(--accent) }
 .hero { padding-bottom: clamp(46px, 8vh, 102px) }
 .hero__media picture { display: block; height: 100% }
+.hero__name i { display: block; font-style: normal }
 .hero__media img { transition: transform .65s ease-out }
 .hero__role { margin: clamp(16px, 3vh, 30px) 0 }
 .hero__intro { background: var(--bone); cursor: pointer }
@@ -631,6 +632,7 @@ main:focus { outline: none }
 }
 .project-index a:hover { color: var(--action); border-color: currentColor }
 .proj__body, .proj__media { min-width: 0 }
+.proj { overflow-x: clip }
 .proj__heading { grid-column: 8 / 13; grid-row: 1; align-self: end }
 .proj__heading ~ .proj__media { grid-row: 1 / 3 }
 .proj__heading ~ .proj__body { grid-row: 2; align-self: start }
@@ -756,6 +758,7 @@ html:has(dialog[open]) { overflow: hidden }
     border-bottom: 1px solid var(--rule);
   }
   .nav__panel a { justify-self: start }
+  .nav__mobile:not([open]) .nav__panel { display: none }
   .criterio__text { grid-row: 2 }
   .criterio__plate { grid-row: 3 }
 }
@@ -779,6 +782,7 @@ html:has(dialog[open]) { overflow: hidden }
   .hero__role strong { letter-spacing: .22em }
   .hero__actions { gap: 8px }
   .hero__actions .btn { padding: 10px 13px }
+  .hero .mu { display: none }
   .edge { display: none }
   .featured { grid-template-columns: 1fr }
   .case-views { grid-template-columns: 1fr }
