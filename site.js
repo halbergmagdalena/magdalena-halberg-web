@@ -1,98 +1,219 @@
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const header = document.querySelector('.header');
-const mobileMenu = document.querySelector('.nav__mobile');
+/* ============================================================
+   Intro en video — al entrar a la web desde afuera
+   La decisión se toma en el <head> de index.html (clase intro-on).
+   ============================================================ */
+(function(){
+  try { localStorage.removeItem('mh-intro-vista'); } catch(e){}     /* limpia la marca de la versión anterior */
 
-if (!document.body.classList.contains('subpage')) {
-  const updateHeader = () => header.classList.toggle('is-stuck', scrollY > 24);
-  updateHeader();
-  addEventListener('scroll', updateHeader, { passive: true });
+  var root = document.documentElement,
+      intro = document.querySelector('[data-intro]');
+  if(!intro || !root.classList.contains('intro-on')) return;
 
-  if ('IntersectionObserver' in window) {
-    const links = [...header.querySelectorAll('a[href^="#"]:not(.brand)')];
-    const spy = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        for (const link of links) {
-          const active = link.hash === '#' + entry.target.id;
-          link.classList.toggle('is-active', active);
-          if (active) link.setAttribute('aria-current', 'location');
-          else link.removeAttribute('aria-current');
-        }
-      }
-    }, { rootMargin: '-35% 0px -55% 0px' });
-    for (const id of new Set(links.map(link => link.hash.slice(1)))) {
-      const section = document.getElementById(id);
-      if (section) spy.observe(section);
-    }
+  var v = intro.querySelector('video'),
+      skip = intro.querySelector('.intro__skip'),
+      done = false, timer;
+
+  /* versión según la pantalla; el archivo solo se descarga si la intro se muestra:
+     celular o tablet en vertical -> 9:16; pantallas chicas apaisadas -> 720p; resto -> 1080p */
+  var vertical = window.matchMedia('(orientation: portrait) and (max-width: 1024px)').matches,
+      chica = window.matchMedia('(max-width: 900px), (max-height: 560px)').matches;
+  if(vertical){ v.poster = 'assets/intro-poster-vertical.jpg'; v.src = 'assets/intro-vertical.mp4'; }
+  else v.src = chica ? 'assets/intro-720.mp4' : 'assets/intro-1080.mp4';
+
+  function cerrar(){
+    if(done) return; done = true; clearTimeout(timer);
+    intro.classList.add('is-leaving');
+    root.classList.add('intro-out');          /* arranca la entrada del nombre mientras se funde el video */
+    setTimeout(function(){
+      try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
+      root.classList.remove('intro-on','intro-out');
+      if(document.activeElement === skip) skip.blur();   /* sin recuadro de foco sobrante al cerrar */
+    }, 700);
   }
-}
 
-if (mobileMenu) {
-  const summary = mobileMenu.querySelector('summary');
-  document.addEventListener('click', event => {
-    const link = event.target.closest('a');
-    if (!mobileMenu.open) return;
-    if (!mobileMenu.contains(event.target) || link) mobileMenu.open = false;
-    if (link && link.hash && link.pathname === location.pathname) {
-      document.getElementById(link.hash.slice(1))?.focus({ preventScroll: true });
-    }
-  });
-  mobileMenu.addEventListener('keydown', event => {
-    if (event.key !== 'Escape' || !mobileMenu.open) return;
-    mobileMenu.open = false;
-    summary.focus();
-  });
-}
+  skip.addEventListener('click', cerrar);
+  v.addEventListener('ended', cerrar);
+  v.addEventListener('error', cerrar);
+  /* la web aparece al terminar la última imagen; los 0,7 s finales del video sostienen ese cuadro durante el fundido */
+  (function vigilar(){
+    if(done) return;
+    if(v.duration && v.currentTime >= v.duration - 0.7) { cerrar(); return; }
+    requestAnimationFrame(vigilar);
+  })();
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') cerrar(); });
 
-const intro = document.querySelector('[data-intro]');
-if (intro && typeof intro.showModal === 'function') {
-  const launch = document.querySelector('[data-intro-open]');
-  const video = intro.querySelector('video');
-  const status = intro.querySelector('[role="status"]');
-  launch.hidden = false;
-  launch.addEventListener('click', () => {
-    const vertical = matchMedia('(orientation: portrait) and (max-width: 1024px)').matches;
-    const compact = matchMedia('(max-width: 900px), (max-height: 560px)').matches;
-    video.poster = vertical ? '/assets/intro-poster-vertical.jpg' : '/assets/intro-poster.jpg';
-    video.src = vertical ? '/assets/intro-vertical.mp4' : compact ? '/assets/intro-720.mp4' : '/assets/intro-1080.mp4';
-    status.textContent = '';
-    intro.showModal();
-    if (!reducedMotion.matches && !navigator.connection?.saveData) {
-      video.play().catch(() => {});
-    }
-  });
-  intro.querySelector('button').addEventListener('click', () => intro.close());
-  video.addEventListener('error', () => {
-    if (intro.open) status.textContent = 'El video no está disponible en este momento.';
-  });
-  intro.addEventListener('close', () => {
-    video.pause();
-    video.removeAttribute('src');
-    video.load();
-    if (!intro.open) launch.focus({ preventScroll: true });
-  });
-}
+  /* sin sonido: siempre muda. Si el navegador no puede reproducir (p. ej. ahorro de batería en iPhone), se sigue a la web */
+  v.muted = true;
+  var p = v.play();
+  if(p && p.catch) p.catch(cerrar);
+  /* red lenta: si en 6 s no arrancó, se sigue a la web */
+  timer = setTimeout(function(){ if(!v.currentTime) cerrar(); }, 6000);
+  v.addEventListener('playing', function(){ clearTimeout(timer); }, {once:true});
 
-const edge = document.querySelector('[data-edge]');
-if (edge) {
-  const updateEdge = () => {
-    const travel = document.documentElement.scrollHeight - innerHeight;
-    edge.style.setProperty('--edge-position', (travel > 0 ? Math.min(1, Math.max(0, scrollY / travel)) : 0) * 70 + 'svh');
-  };
-  updateEdge();
-  addEventListener('scroll', updateEdge, { passive: true });
-  addEventListener('resize', updateEdge);
-}
+  skip.focus({preventScroll:true});
+})();
 
-const hero = document.querySelector('.hero');
-const heroImage = hero?.querySelector('img');
-if (heroImage && matchMedia('(hover:hover) and (pointer:fine)').matches) {
-  hero.addEventListener('pointermove', event => {
-    if (reducedMotion.matches || event.pointerType !== 'mouse') return;
-    const bounds = hero.getBoundingClientRect();
-    const x = (0.5 - (event.clientX - bounds.left) / bounds.width) * 14;
-    const y = (0.5 - (event.clientY - bounds.top) / bounds.height) * 8;
-    heroImage.style.transform = 'scale(1.035) translate(' + x + 'px,' + y + 'px)';
-  });
-  hero.addEventListener('pointerleave', () => heroImage.style.removeProperty('transform'));
-}
+/* ============================================================
+   Línea editorial — elemento gráfico permanente
+   No es un indicador de carga ni de progreso.
+   ============================================================ */
+(function(){
+  var el = document.querySelector('[data-edge]');
+  if(!el) return;
+  var line = el.querySelector('.edge__line'),
+      dot  = el.querySelector('.edge__dot'),
+      reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var BASE = 0.30,   // altura de reposo, en fracción de viewport
+      MAX  = 0.48,   // nunca más de la mitad de la pantalla
+      MIN  = 0.26;
+
+  var cur = 0, target = 0, h = 0, curH = BASE, lastScroll = 0, vel = 0;
+
+  // continuidad entre páginas: retoma la posición anterior en vez de reiniciar
+  try {
+    var saved = sessionStorage.getItem('mh-edge');
+    if(saved !== null) cur = parseFloat(saved);
+  } catch(e){}
+
+  function progress(){
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    return max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+  }
+
+  function frame(){
+    var vh = window.innerHeight;
+    target = progress();
+
+    // la altura respira levemente con la velocidad del scroll
+    var want = Math.min(MAX, Math.max(MIN, BASE + Math.min(Math.abs(vel) / 2600, 0.18)));
+    curH += (want - curH) * 0.06;
+    vel *= 0.90;
+
+    // inercia: la línea persigue al scroll, nunca lo copia
+    cur += (target - cur) * (reduce ? 1 : 0.055);
+
+    h = curH * vh;
+    var travel = vh - h;
+    var y = cur * travel;
+
+    line.style.height = h + 'px';
+    line.style.transform = 'translate3d(0,' + y + 'px,0)';
+    dot.style.transform  = 'translate3d(0,' + (y + h) + 'px,0)';
+
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('scroll', function(){
+    vel = window.scrollY - lastScroll;
+    lastScroll = window.scrollY;
+    try { sessionStorage.setItem('mh-edge', String(progress())); } catch(e){}
+  }, {passive:true});
+
+  lastScroll = window.scrollY;
+  requestAnimationFrame(frame);
+})();
+
+/* ============================================================
+   Profundidad del hero — sólo el render responde al cursor.
+   Tipografía, logo y navegación permanecen inmóviles.
+   ============================================================ */
+(function(){
+  var img = document.querySelector('.hero__media img');
+  if(!img) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+
+  var MAX = 7;                    // desplazamiento máximo, en píxeles
+  var tx = 0, ty = 0, cx = 0, cy = 0, raf = null;
+
+  function loop(){
+    cx += (tx - cx) * 0.045;      // seguimiento lento: nunca acompaña al cursor
+    cy += (ty - cy) * 0.045;
+    img.style.transform = 'scale(1.028) translate3d(' + cx.toFixed(2) + 'px,' + cy.toFixed(2) + 'px,0)';
+    if(Math.abs(tx-cx) > 0.02 || Math.abs(ty-cy) > 0.02){ raf = requestAnimationFrame(loop) }
+    else { raf = null }
+  }
+  function start(){ if(!raf) raf = requestAnimationFrame(loop) }
+
+  window.addEventListener('mousemove', function(e){
+    var w = window.innerWidth, h = window.innerHeight;
+    tx = ((e.clientX / w) - 0.5) * -2 * MAX;
+    ty = ((e.clientY / h) - 0.5) * -2 * (MAX * 0.6);
+    start();
+  }, {passive:true});
+
+  window.addEventListener('mouseleave', function(){ tx = 0; ty = 0; start() });
+})();
+
+/* ============================================================
+   Profundidad del hero — el render responde apenas al cursor.
+   Sólo la imagen se mueve. Tipografía, logo y menú quedan fijos.
+   ============================================================ */
+(function(){
+  var img = document.querySelector('.hero__media img');
+  if(!img) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+
+  var MAX = 7;                     // desplazamiento máximo, en píxeles
+  var tx=0, ty=0, cx=0, cy=0, raf=null, active=false;
+
+  function onMove(e){
+    var w = window.innerWidth, h = window.innerHeight;
+    tx = ((e.clientX / w) - 0.5) * -2 * MAX;
+    ty = ((e.clientY / h) - 0.5) * -2 * (MAX * 0.6);
+    if(!raf) raf = requestAnimationFrame(frame);
+  }
+
+  function frame(){
+    cx += (tx - cx) * 0.045;       // seguimiento lento: sugiere masa, no reacción
+    cy += (ty - cy) * 0.045;
+    img.style.transform = 'scale(1.028) translate3d(' + cx.toFixed(2) + 'px,' + cy.toFixed(2) + 'px,0)';
+    if(Math.abs(tx-cx) > 0.05 || Math.abs(ty-cy) > 0.05){
+      raf = requestAnimationFrame(frame);
+    } else { raf = null; }
+  }
+
+  // sólo mientras el hero está en pantalla
+  var hero = document.querySelector('.hero');
+  if(hero && 'IntersectionObserver' in window){
+    new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting && !active){ active=true; window.addEventListener('mousemove', onMove, {passive:true}) }
+        else if(!e.isIntersecting && active){ active=false; window.removeEventListener('mousemove', onMove) }
+      });
+    },{threshold:0.05}).observe(hero);
+  } else {
+    window.addEventListener('mousemove', onMove, {passive:true});
+  }
+})();
+
+/* ============================================================
+   Profundidad del hero — el render responde levemente al cursor.
+   Sólo la imagen. Tipografía, logo y navegación quedan fijos.
+   ============================================================ */
+(function(){
+  var wrap = document.querySelector('[data-depth]');
+  if(!wrap) return;
+  var img = wrap.querySelector('img');
+  if(!img) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if(!window.matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+
+  var MAX = 7;                    // desplazamiento máximo, en píxeles
+  var tx=0, ty=0, cx=0, cy=0, live=false;
+
+  window.addEventListener('mousemove', function(e){
+    tx = ((e.clientX / window.innerWidth)  - 0.5) * -2 * MAX;
+    ty = ((e.clientY / window.innerHeight) - 0.5) * -2 * MAX;
+    if(!live){ live=true; requestAnimationFrame(loop) }
+  }, {passive:true});
+
+  function loop(){
+    cx += (tx - cx) * 0.045;      // seguimiento lento: da peso, no reacción
+    cy += (ty - cy) * 0.045;
+    img.style.transform = 'scale(1.035) translate3d(' + cx.toFixed(2) + 'px,' + cy.toFixed(2) + 'px,0)';
+    if(Math.abs(tx-cx) > 0.05 || Math.abs(ty-cy) > 0.05){ requestAnimationFrame(loop) } else { live=false }
+  }
+})();

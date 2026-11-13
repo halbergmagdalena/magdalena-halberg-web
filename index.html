@@ -19,7 +19,6 @@
 <meta property="og:title" content="Magdalena Halberg — Arquitectura &amp; Diseño de Interiores">
 <meta property="og:description" content="Proyectos de arquitectura y diseño de interiores para estudios, constructoras y clientes particulares. Documentación técnica, modelado 3D y visualización arquitectónica.">
 <meta property="og:image" content="https://www.magdalenahalberg.com.ar/assets/hero-render.jpg">
-<meta property="og:image:alt" content="Fachada de una vivienda pareada">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Magdalena Halberg — Arquitectura &amp; Diseño de Interiores">
 <meta name="twitter:description" content="Proyectos de arquitectura y diseño de interiores para estudios, constructoras y clientes particulares. Documentación técnica, modelado 3D y visualización arquitectónica.">
@@ -172,16 +171,40 @@
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
 
+<!-- Intro: se decide antes del primer pintado para que no "parpadee" la página.
+     Aparece al llegar desde afuera (otro sitio, un link, la dirección escrita o un favorito);
+     no aparece al recargar, al volver atrás ni al navegar entre secciones de la web. -->
+<script>
+(function(){
+  var show=false;
+  try{
+    var forzar=/[?&]intro(=1)?(&|$)/.test(location.search);           /* ?intro la fuerza (para probarla) */
+    var nav=performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+    var tipo=nav ? nav.type : (performance.navigation && performance.navigation.type===1 ? 'reload' : 'navigate');
+    var interno=false;
+    try{ interno = !!document.referrer && new URL(document.referrer).origin===location.origin; }catch(e){}
+    var reducir=window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ahorro=navigator.connection && navigator.connection.saveData;
+    show = forzar || (!interno && tipo!=='reload' && tipo!=='back_forward' && !location.hash && !reducir && !ahorro);
+  }catch(e){}
+  if(show){
+    document.documentElement.classList.add('intro-on');
+    /* resguardo: si el script del sitio no cargara, la web nunca queda tapada */
+    setTimeout(function(){ document.documentElement.classList.remove('intro-on'); }, 20000);
+  }
+})();
+</script>
+
+<!-- SDK de EmailJS (https://www.emailjs.com/) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#contenido">Saltar al contenido</a>
 
 <!-- ============================ INTRO ============================ -->
-<dialog class="intro" data-intro aria-label="Video introductorio">
-  <button class="intro__skip" type="button" autofocus>Cerrar intro <span aria-hidden="true">×</span></button>
-  <video class="intro__video" muted playsinline preload="none" controls aria-label="Secuencia de visualizaciones arquitectónicas"></video>
-  <p class="intro__status" role="status"></p>
-</dialog>
+<div class="intro" data-intro role="dialog" aria-modal="true" aria-label="Video introductorio">
+  <video class="intro__video" muted playsinline preload="none" poster="assets/intro-poster.jpg" aria-hidden="true"></video>
+  <button class="intro__skip" type="button">Saltar intro <span class="btn__arrow" aria-hidden="true">→</span></button>
+</div>
 
 <div class="edge" data-edge aria-hidden="true">
   <span class="edge__line"></span>
@@ -206,25 +229,20 @@
 </svg>
     <span>Magdalena Halberg</span>
   </a>
-  <nav class="nav" aria-label="Principal">
-    <div class="nav__desktop"><a href="#top">Inicio</a><a href="#criterio">Criterio</a><a href="#servicios">Servicios</a><a href="#sobre-mi">Sobre mí</a></div>
-    <a href="/proyectos.html">Proyectos</a>
+  <nav class="nav">
+    <a href="#top">Inicio</a>
+    <a href="#criterio">Criterio</a>
+    <a href="#servicios">Servicios</a>
+    <a href="#proyectos">Proyectos</a>
+    <a href="#sobre-mi">Sobre mí</a>
     <a class="btn-nav" href="#contacto">Contactar</a>
-    <details class="nav__mobile">
-      <summary>Menú</summary>
-      <div class="nav__panel"><a href="#top">Inicio</a><a href="#criterio">Criterio</a><a href="#servicios">Servicios</a><a href="#sobre-mi">Sobre mí</a></div>
-    </details>
   </nav>
 </header>
 
 <!-- ============================ HERO ============================ -->
-<main id="contenido" tabindex="-1">
-<section class="hero" id="top" tabindex="-1">
-  <div class="hero__media" data-depth><picture>
-    <source type="image/webp" media="(max-width: 760px) and (orientation: portrait)" srcset="assets/hero-mobile.webp">
-    <source type="image/webp" srcset="assets/hero-wide.webp">
-    <img src="assets/hero-render.jpg" alt="Vivienda pareada — visualización arquitectónica en blanco y negro" fetchpriority="high">
-  </picture></div>
+<main id="top">
+<section class="hero">
+  <div class="hero__media" data-depth><img src="assets/hero-render.jpg" alt="Vivienda pareada — visualización arquitectónica en blanco y negro"></div>
   <div class="hero__veil"></div>
 
   <div class="hero__inner">
@@ -233,33 +251,28 @@
       <span><i>Halberg<b class="hl">.</b></i></span>
     </h1>
     <p class="hero__role"><em></em><strong>Arquitecta</strong></p>
-    <div class="actions hero__actions">
-      <a class="btn btn--solid" href="/proyectos.html">Ver proyectos <span class="btn__arrow" aria-hidden="true">→</span></a>
-      <button class="btn hero__intro" data-intro-open type="button" hidden>Ver intro <span aria-hidden="true">▷</span></button>
-    </div>
   </div>
 </section>
 
 <!-- ============================ CRITERIO ============================ -->
-<section class="wrap section section--air" id="criterio" tabindex="-1">
+<section class="wrap section section--air" id="criterio">
   <div class="grid12">
     <div class="criterio__label rise"><p class="label label--dash label--ink">Criterio</p></div>
+    <figure class="criterio__plate plate rise">
+      <img src="assets/plate-a.jpg" alt="Vivienda unifamiliar — visualización arquitectónica">
+    </figure>
     <div class="criterio__text rise">
       <h2 class="statement">La <i class="hl">claridad</i> es el primer material de un proyecto.</h2>
       <div class="criterio__cols">
       <p>Trabajo con la información que la obra necesita: medidas, encuentros, materiales y decisiones tomadas a tiempo. La documentación, el modelo y las imágenes forman una misma pieza.</p>
       <p>Cada entrega busca lo mismo. Que el proyecto se entienda sin esfuerzo y que el equipo lo construya leyendo siempre la misma información.</p>
       </div>
-      <p class="criterio__example"><a class="text-link" href="/proyectos/masterplan-costero.html">Ver la implantación y la vista aérea del masterplan costero</a></p>
     </div>
-    <figure class="criterio__plate plate rise">
-      <img src="assets/plate-a.jpg" loading="lazy" decoding="async" alt="Vivienda unifamiliar — visualización arquitectónica">
-    </figure>
   </div>
 </section>
 
 <!-- ============================ SERVICIOS ============================ -->
-<section class="wrap section section--dense" id="servicios" tabindex="-1">
+<section class="wrap section section--dense" id="servicios">
   <div class="sec-head">
     <h2 class="sec-title"><b>Servicios</b><i class="hl">.</i></h2>
     <p class="label">Estudios · Desarrolladores · Constructoras · Particulares</p>
@@ -270,70 +283,71 @@
     <div class="svc__row">
       <p class="svc__num">01</p>
       <h3 class="svc__name">Proyectos arquitectónicos</h3>
-      <div class="svc__detail"><p class="svc__desc">Desde el anteproyecto hasta la definición completa de la propuesta.</p><a class="text-link" href="/proyectos/casa-camila.html">Casa Camila</a></div>
+      <p class="svc__desc">Desde el anteproyecto hasta la definición completa de la propuesta.</p>
     </div>
     <div class="svc__row">
       <p class="svc__num">02</p>
       <h3 class="svc__name">Diseño de interiores</h3>
-      <div class="svc__detail"><p class="svc__desc">Interiorismo de viviendas, oficinas y locales: distribución, materiales, mobiliario a medida e iluminación.</p><a class="text-link" href="/proyectos/living-comedor.html">Remodelación de living comedor</a></div>
+      <p class="svc__desc">Interiorismo de viviendas, oficinas y locales: distribución, materiales, mobiliario a medida e iluminación.</p>
     </div>
     <div class="svc__row">
       <p class="svc__num">03</p>
       <h3 class="svc__name">Documentación técnica</h3>
-      <div class="svc__detail"><p class="svc__desc">Documentación ejecutiva precisa y coordinada, con la información que cada etapa de obra necesita.</p><a class="text-link" href="/proyectos/casa-camila.html">Casa Camila</a></div>
+      <p class="svc__desc">Documentación ejecutiva precisa y coordinada, con la información que cada etapa de obra necesita.</p>
     </div>
     <div class="svc__row">
       <p class="svc__num">04</p>
       <h3 class="svc__name">Modelado 3D</h3>
-      <div class="svc__detail"><p class="svc__desc">Modelos digitales exactos que sostienen el proyecto y la documentación desde una misma base.</p><a class="text-link" href="/proyectos/masterplan-costero.html">Masterplan costero</a></div>
+      <p class="svc__desc">Modelos digitales exactos que sostienen el proyecto y la documentación desde una misma base.</p>
     </div>
     <div class="svc__row">
       <p class="svc__num">05</p>
       <h3 class="svc__name">Visualización arquitectónica</h3>
-      <div class="svc__detail"><p class="svc__desc">Imágenes que comunican el proyecto con fidelidad, para presentaciones, aprobaciones y procesos comerciales.</p><a class="text-link" href="/proyectos/masterplan-costero.html">Masterplan costero</a></div>
+      <p class="svc__desc">Imágenes que comunican el proyecto con fidelidad, para presentaciones, aprobaciones y procesos comerciales.</p>
     </div>
     <div class="svc__row">
       <p class="svc__num">06</p>
       <h3 class="svc__name">Diseño de loteos</h3>
-      <div class="svc__detail"><p class="svc__desc">Planificación conceptual, trazado de lotes residenciales, propuestas de subdivisión y apoyo al masterplan.</p><a class="text-link" href="/proyectos/masterplan-costero.html">Ver implantación</a></div>
+      <p class="svc__desc">Planificación conceptual, trazado de lotes residenciales, propuestas de subdivisión y apoyo al masterplan.</p>
     </div>
   </div>
   <figure class="svc-plate plate rise">
-    <img src="assets/servicios-vertical.jpg" loading="lazy" decoding="async" alt="Interior — visualización arquitectónica">
+    <img src="assets/servicios-vertical.jpg" alt="Interior — visualización arquitectónica">
   </figure>
   </div>
 </section>
 
 <!-- ============================ PROYECTOS ============================ -->
-<section class="wrap section" id="proyectos" tabindex="-1">
+<section class="wrap section" id="proyectos">
   <div class="pf">
     <div class="pf__label rise"><p class="label label--dash label--ink">Proyectos</p></div>
     <div class="pf__title rise">
       <h2 class="statement">Una selección<br>de trabajos<i class="hl">.</i></h2>
     </div>
     <div class="pf__side rise">
-      <p>Trabajos de arquitectura, interiores y desarrollo urbano.</p>
-      <a class="btn btn--solid" href="/proyectos.html">Ver todos los proyectos <span class="btn__arrow" aria-hidden="true">→</span></a>
+      <p>Desarrollados a lo largo de mi experiencia profesional.</p>
+      <a class="btn btn--solid" href="proyectos.html">Ver proyectos <span class="btn__arrow" aria-hidden="true">→</span></a>
     </div>
-  </div>
-  <div class="featured">
-    <a href="/proyectos/casa-camila.html"><img src="assets/p4-c0-m.jpg" alt="" loading="lazy" decoding="async"><strong>Casa Camila</strong><span>Anteproyecto y documentación técnica</span></a>
-    <a href="/proyectos/living-comedor.html"><img src="assets/p5-c0-m.jpg" alt="" loading="lazy" decoding="async"><strong>Remodelación de living comedor</strong><span>Interiorismo y documentación técnica</span></a>
-    <a href="/proyectos/masterplan-costero.html"><img src="assets/p10-c0-m.jpg" alt="" loading="lazy" decoding="async"><strong>Masterplan costero</strong><span>Documentación técnica, modelado y visualización</span></a>
   </div>
 </section>
 
 <!-- ============================ SOBRE MÍ ============================ -->
-<section class="about" id="sobre-mi" tabindex="-1">
+<section class="about" id="sobre-mi">
   <p class="label label--dash" style="margin:0 0 clamp(30px,4.4vh,54px)">Sobre mí</p>
   <div class="about__grid">
     <figure class="about__figure rise" style="margin:0">
-      <img src="assets/portrait.jpg" loading="lazy" decoding="async" alt="Retrato de Magdalena Halberg">
+      <img src="assets/portrait.jpg" alt="Retrato de Magdalena Halberg">
     </figure>
     <div class="about__body rise">
       <h2 class="about__title">Precisión, claridad y <b>calidad de ejecución.</b></h2>
-      <p>Trabajo en proyectos de arquitectura e interiores, desde el anteproyecto hasta la documentación ejecutiva. Según la etapa, desarrollo la propuesta, preparo planos y detalles o armo el modelo 3D y las imágenes para presentar el proyecto.</p>
-      <p>Colaboro de forma remota con estudios, desarrolladores y constructoras. Puedo sumarme al comienzo de un proyecto o tomar una entrega puntual dentro de un equipo que ya está trabajando.</p>
+      <p>Desarrollo proyectos de arquitectura e interiores y la documentación que los hace construibles, acompañando cada etapa con la información precisa que necesitan el equipo, el cliente y la obra.</p>
+      <p>Entiendo la arquitectura como un trabajo de orden: definir con claridad, documentar con precisión y representar con fidelidad lo que se va a construir.</p>
+      <p>Colaboro de forma remota con estudios de arquitectura, desarrolladores y empresas constructoras, integrándome al equipo con la información que cada proyecto necesita.</p>
+      <ul class="principles">
+        <li><span>01</span><p>El detalle define la calidad del proyecto.</p></li>
+        <li><span>02</span><p>Un solo modelo sostiene todas las etapas.</p></li>
+        <li><span>03</span><p>La representación acompaña lo que se va a construir.</p></li>
+      </ul>
       <div class="about__cta">
         <a class="btn btn--solid" href="cv-magdalena-halberg.pdf" target="_blank" rel="noopener">Descargar CV <span class="btn__arrow" aria-hidden="true">↗</span></a>
       </div>
@@ -342,11 +356,31 @@
 </section>
 
 <!-- ============================ CONTACTO ============================ -->
-<section class="wrap contact" id="contacto" tabindex="-1">
+<section class="wrap contact" id="contacto">
   <p class="label label--dash label--ink rise">Un proyecto en marcha</p>
   <h2 class="contact__title rise">Hablemos<i>.</i></h2>
 
   <div class="contact__grid">
+    <form class="form rise" id="contact-form" novalidate>
+      <div class="field">
+        <label for="f-name">Nombre</label>
+        <input id="f-name" name="name" type="text" autocomplete="name" placeholder="Nombre y apellido" required>
+      </div>
+      <div class="field">
+        <label for="f-mail">Email</label>
+        <input id="f-mail" name="email" type="email" autocomplete="email" placeholder="nombre@estudio.com" required>
+      </div>
+      <div class="field">
+        <label for="f-msg">Mensaje</label>
+        <textarea id="f-msg" name="message" rows="3" placeholder="Contame brevemente el proyecto" required></textarea>
+      </div>
+      <div class="flex-container">
+
+        <button class="btn form__send " type="submit">Enviar mensaje <span class="btn__arrow" aria-hidden="true">→</span></button>
+        <p class="form__note " id="form-note" role="status"></p>
+      </div>
+    </form>
+
     <div class="direct rise">
       <div class="direct__list">
         <a class="direct__item" href="mailto:halbergmagdalena@gmail.com">
@@ -371,29 +405,6 @@
         </a>
       </div>
     </div>
-    <form class="form rise" id="contact-form" novalidate>
-      <div class="field">
-        <label for="f-name">Nombre</label>
-        <input id="f-name" aria-describedby="error-name" name="name" type="text" autocomplete="name" placeholder="Nombre y apellido" required>
-        <p class="field__error" id="error-name"></p>
-      </div>
-      <div class="field">
-        <label for="f-mail">Email</label>
-        <input id="f-mail" aria-describedby="error-mail" name="email" type="email" autocomplete="email" placeholder="nombre@estudio.com" required>
-        <p class="field__error" id="error-mail"></p>
-      </div>
-      <div class="field">
-        <label for="f-msg">Mensaje</label>
-        <textarea id="f-msg" aria-describedby="error-msg" name="message" rows="3" placeholder="Contame brevemente el proyecto" required></textarea>
-        <p class="field__error" id="error-msg"></p>
-      </div>
-      <div class="flex-container">
-
-        <button class="btn form__send" type="submit" disabled>Enviar mensaje <span class="btn__arrow" aria-hidden="true">→</span></button>
-        <p class="form__note " id="form-note" role="status"></p>
-      </div>
-    <noscript><p>Para escribirme, usá el email o WhatsApp.</p></noscript>
-    </form>
   </div>
 </section>
 </main>
@@ -408,8 +419,69 @@
   <span class="label">© 2026 <i class="hl">—</i> Todos los derechos reservados</span>
 </footer>
 
-<script src="/site.js" defer></script>
-<script src="/contacto.js" defer></script>
-<script src="/munieco.js" defer></script>
+<script>
+(function(){
+  var h=document.getElementById('header');
+  var onScroll=function(){ h.classList.toggle('is-stuck', window.scrollY>24) };
+  onScroll(); window.addEventListener('scroll',onScroll,{passive:true});
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target) } });
+  },{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rise').forEach(function(el,i){
+    el.style.transitionDelay=(i%3)*70+'ms'; io.observe(el);
+  });
+
+  var links=[].slice.call(document.querySelectorAll('.nav a[href^="#"]:not(.btn-nav)'));
+  var secs=links.map(function(a){ return document.querySelector(a.getAttribute('href')) });
+  var spy=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      var i=secs.indexOf(e.target);
+      if(i>-1 && e.isIntersecting){ links.forEach(function(l){ l.classList.remove('is-active') }); links[i].classList.add('is-active') }
+    });
+  },{rootMargin:'-45% 0px -50% 0px'});
+  secs.forEach(function(sc){ if(sc) spy.observe(sc) });
+
+  // --- EmailJS: completar con los datos de tu cuenta (dashboard.emailjs.com) ---
+  var EMAILJS_PUBLIC_KEY  = 'seTFN3N2EdtXbco91'; // string · "Public Key" en Account > General
+  var EMAILJS_SERVICE_ID  = 'service_fp0r6o8'; // string · id del servicio en Email Services (ej: "service_xxxxxxx")
+  var EMAILJS_TEMPLATE_ID = 'template_4jatrmb'; // string · id de la plantilla en Email Templates (ej: "template_xxxxxxx")
+
+  var emailjsListo=false;   /* el SDK se carga diferido: se inicializa recién al enviar */
+
+  var f=document.getElementById('contact-form'), note=document.getElementById('form-note');
+  f.addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var n=f.name.value.trim(), m=f.email.value.trim(), t=f.message.value.trim();
+    if(!n||!m||!t){ note.textContent='Completá los tres campos para poder enviar el mensaje.'; return }
+
+    if(!window.emailjs){ note.textContent='No se pudo conectar con el envío. Escribime por mail o WhatsApp.'; return }
+    if(!emailjsListo){ emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY }); emailjsListo=true }
+    note.textContent='Enviando…';
+
+    // Estos nombres (name, email, message, time) deben coincidir con las
+    // variables {{name}} {{email}} {{message}} {{time}} usadas dentro de tu
+    // plantilla en el dashboard de EmailJS.
+    var templateParams = {
+      name: n,     // string · nombre completo ingresado en el campo "Nombre"
+      email: m,    // string · email ingresado en el campo "Email"
+      message: t,  // string · texto ingresado en el campo "Mensaje"
+      time: new Date().toLocaleString('es-AR') // string · fecha/hora del envío
+    };
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      .then(function(){
+        note.textContent='¡Mensaje enviado! Te voy a responder a la brevedad.';
+        f.reset();
+      })
+      .catch(function(err){
+        note.textContent='Hubo un error al enviar. Probá de nuevo o escribime por mail.';
+        console.error('EmailJS error:', err);
+      });
+  });
+})();
+</script>
+<script src="site.js" defer></script>
+<script src="munieco.js" defer></script>
 </body>
 </html>
