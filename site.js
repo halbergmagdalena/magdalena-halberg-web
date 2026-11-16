@@ -17,8 +17,8 @@
      celular o tablet en vertical -> 9:16; pantallas chicas apaisadas -> 720p; resto -> 1080p */
   var vertical = window.matchMedia('(orientation: portrait) and (max-width: 1024px)').matches,
       chica = window.matchMedia('(max-width: 900px), (max-height: 560px)').matches;
-  if(vertical){ v.poster = 'assets/intro-poster-vertical.jpg'; v.src = 'assets/intro-vertical.mp4'; }
-  else v.src = chica ? 'assets/intro-720.mp4' : 'assets/intro-1080.mp4';
+  if(vertical){ v.poster = '/assets/intro-poster-vertical.jpg'; v.src = '/assets/intro-vertical.mp4'; }
+  else v.src = chica ? '/assets/intro-720.mp4' : '/assets/intro-1080.mp4';
 
   function cerrar(){
     if(done) return; done = true; clearTimeout(timer);
